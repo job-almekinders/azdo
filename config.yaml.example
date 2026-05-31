@@ -25,3 +25,9 @@ polling_interval: 60
 # Custom themes: Place JSON theme files in ~/.config/azdo-tui/themes/
 # Example: If you have ~/.config/azdo-tui/themes/mytheme.json, use: theme: mytheme
 theme: dark
+
+# Authentication method (optional, default: pat)
+# Options:
+#   pat    - use a Personal Access Token stored in the system keyring
+#   az-cli - use an existing 'az login' session (no PAT needed)
+# auth_method: az-cli

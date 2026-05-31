@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"strings"
 	"sync"
 	"time"
 )
@@ -66,6 +67,10 @@ func (a *AzCLITokenProvider) fetchToken() (string, time.Time, error) {
 		"--resource", azDevOpsResourceID,
 		"--output", "json")
 	if err != nil {
+		if exitErr, ok := err.(*exec.ExitError); ok && len(exitErr.Stderr) > 0 {
+			return "", time.Time{}, fmt.Errorf("az CLI error (run 'az login' to refresh): %s",
+				strings.TrimSpace(string(exitErr.Stderr)))
+		}
 		return "", time.Time{}, fmt.Errorf(
 			"az CLI not available or not logged in: run 'az login' first: %w", err)
 	}

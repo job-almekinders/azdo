@@ -324,7 +324,7 @@ func TestClient_Get_ContentTypeHeader(t *testing.T) {
 }
 
 func TestFormatHTTPError_NotFound(t *testing.T) {
-	err := formatHTTPError(http.StatusNotFound, []byte(`{}`))
+	err := testClient().formatHTTPError(http.StatusNotFound, []byte(`{}`))
 
 	if !strings.Contains(err.Error(), "404") {
 		t.Errorf("Expected error to contain '404', got %q", err.Error())
@@ -338,7 +338,7 @@ func TestFormatHTTPError_NotFound(t *testing.T) {
 }
 
 func TestFormatHTTPError_RateLimit(t *testing.T) {
-	err := formatHTTPError(http.StatusTooManyRequests, []byte(`{}`))
+	err := testClient().formatHTTPError(http.StatusTooManyRequests, []byte(`{}`))
 
 	if !strings.Contains(err.Error(), "429") {
 		t.Errorf("Expected error to contain '429', got %q", err.Error())
@@ -352,7 +352,7 @@ func TestFormatHTTPError_RateLimit(t *testing.T) {
 }
 
 func TestFormatHTTPError_ServerError(t *testing.T) {
-	err := formatHTTPError(http.StatusInternalServerError, []byte(`{}`))
+	err := testClient().formatHTTPError(http.StatusInternalServerError, []byte(`{}`))
 
 	if !strings.Contains(err.Error(), "500") {
 		t.Errorf("Expected error to contain '500', got %q", err.Error())
@@ -363,7 +363,7 @@ func TestFormatHTTPError_ServerError(t *testing.T) {
 }
 
 func TestFormatHTTPError_ServiceUnavailable(t *testing.T) {
-	err := formatHTTPError(http.StatusServiceUnavailable, []byte(`{}`))
+	err := testClient().formatHTTPError(http.StatusServiceUnavailable, []byte(`{}`))
 
 	if !strings.Contains(err.Error(), "503") {
 		t.Errorf("Expected error to contain '503', got %q", err.Error())
@@ -413,4 +413,10 @@ type fakeProvider struct {
 
 func (f *fakeProvider) AuthorizationHeader() (string, error) {
 	return f.header, f.err
+}
+
+// testClient returns a minimal *Client with a PAT provider for use in unit tests.
+func testClient() *Client {
+	p, _ := NewPATTokenProvider("test-pat")
+	return newClient("org", "proj", p)
 }

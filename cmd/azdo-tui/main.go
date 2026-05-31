@@ -74,6 +74,10 @@ Configuration:
   Config file: %s
   PAT storage: System keyring (service: azdo-tui)
   PAT fallback: AZDO_PAT environment variable
+  Auth methods:
+    pat    (default) Personal Access Token — stored in system keyring
+    az-cli           Uses existing 'az login' session, no PAT needed
+                     Set 'auth_method: az-cli' in config.yaml
 
 Required PAT permissions:
   Build        (Read)         - pipelines, build logs

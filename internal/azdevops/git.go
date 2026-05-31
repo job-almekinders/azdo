@@ -423,7 +423,7 @@ func (c *Client) GetFileContent(repositoryID string, filePath string, branchName
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", formatHTTPError(resp.StatusCode, respBody)
+		return "", c.formatHTTPError(resp.StatusCode, respBody)
 	}
 
 	return string(respBody), nil

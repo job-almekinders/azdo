@@ -107,7 +107,7 @@ func (c *Client) get(path string) ([]byte, error) {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, formatHTTPError(resp.StatusCode, body)
+		return nil, c.formatHTTPError(resp.StatusCode, body)
 	}
 	return body, nil
 }
@@ -151,7 +151,7 @@ func (c *Client) doRequestWithContentType(method, path string, body io.Reader, c
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, formatHTTPError(resp.StatusCode, respBody)
+		return nil, c.formatHTTPError(resp.StatusCode, respBody)
 	}
 	return respBody, nil
 }
@@ -180,7 +180,7 @@ func (c *Client) doRequest(method, path string, body io.Reader) ([]byte, error) 
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, formatHTTPError(resp.StatusCode, respBody)
+		return nil, c.formatHTTPError(resp.StatusCode, respBody)
 	}
 	return respBody, nil
 }
@@ -221,7 +221,7 @@ func (c *Client) GetCurrentUserID() (string, error) {
 	}
 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return "", formatHTTPError(resp.StatusCode, body)
+		return "", c.formatHTTPError(resp.StatusCode, body)
 	}
 
 	var data connectionDataResponse
@@ -238,12 +238,20 @@ func (c *Client) GetCurrentUserID() (string, error) {
 }
 
 // formatHTTPError creates a user-friendly error message based on the HTTP status code.
-func formatHTTPError(statusCode int, _ []byte) error {
+func (c *Client) formatHTTPError(statusCode int, _ []byte) error {
 	switch statusCode {
 	case http.StatusUnauthorized:
+		if _, ok := c.tokenProvider.(*AzCLITokenProvider); ok {
+			return fmt.Errorf("authentication failed (HTTP 401): az-cli token was rejected. " +
+				"Run 'az login' to refresh your session")
+		}
 		return fmt.Errorf("authentication failed (HTTP 401): your PAT may be expired or invalid. " +
 			"Please generate a new PAT in Azure DevOps and update your configuration")
 	case http.StatusForbidden:
+		if _, ok := c.tokenProvider.(*AzCLITokenProvider); ok {
+			return fmt.Errorf("access denied (HTTP 403): your Azure account does not have sufficient " +
+				"permissions. Required: Code (Read), Build (Read), Work Items (Read & Write)")
+		}
 		return fmt.Errorf("access denied (HTTP 403): your PAT does not have sufficient permissions. " +
 			"Required scopes: Code (Read), Build (Read), Work Items (Read & Write)")
 	case http.StatusNotFound:
