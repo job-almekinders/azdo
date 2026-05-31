@@ -180,11 +180,11 @@ func TestClient_GetWorkItems_RequestsReproStepsField(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	_, err := client.GetWorkItems([]int{1})
@@ -221,11 +221,11 @@ func TestClient_QueryWorkItemIDs(t *testing.T) {
 
 	// Create client with mock server
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	ids, err := client.QueryWorkItemIDs("SELECT [System.Id] FROM WorkItems", 50)
@@ -281,11 +281,11 @@ func TestClient_GetWorkItems(t *testing.T) {
 
 	// Create client with mock server
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	workItems, err := client.GetWorkItems([]int{123, 456})
@@ -303,11 +303,11 @@ func TestClient_GetWorkItems(t *testing.T) {
 
 func TestClient_GetWorkItems_EmptyIDs(t *testing.T) {
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    "http://example.com",
-		httpClient: http.DefaultClient,
+		baseURL:       "http://example.com",
+		httpClient:    http.DefaultClient,
 	}
 
 	workItems, err := client.GetWorkItems([]int{})
@@ -348,11 +348,11 @@ func TestClient_ListWorkItems_QueryScopedToProject(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	_, err := client.ListWorkItems(50)
@@ -396,11 +396,11 @@ func TestClient_ListWorkItems(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	workItems, err := client.ListWorkItems(50)
@@ -430,11 +430,11 @@ func TestClient_ListMyWorkItems_QueryContainsAtMe(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	_, err := client.ListMyWorkItems(50)
@@ -461,11 +461,11 @@ func TestClient_ListWorkItems_NoResults(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	workItems, err := client.ListWorkItems(50)
@@ -501,11 +501,11 @@ func TestClient_GetWorkItemTypeStates(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	states, err := client.GetWorkItemTypeStates("Bug")
@@ -541,11 +541,11 @@ func TestClient_GetWorkItemTypeStates_ExcludesRemovedCategory(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	states, err := client.GetWorkItemTypeStates("Bug")
@@ -585,11 +585,11 @@ func TestClient_UpdateWorkItemState(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	err := client.UpdateWorkItemState(123, "Resolved")
@@ -702,11 +702,11 @@ func TestClient_GetWorkItems_RequestsTagsField(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	_, err := client.GetWorkItems([]int{1})
@@ -726,11 +726,11 @@ func TestClient_UpdateWorkItemState_APIError(t *testing.T) {
 	defer server.Close()
 
 	client := &Client{
-		org:        "test-org",
-		project:    "test-project",
+		org:           "test-org",
+		project:       "test-project",
 		tokenProvider: &PATTokenProvider{pat: "test-pat"},
-		baseURL:    server.URL + "/test-org/test-project/_apis",
-		httpClient: http.DefaultClient,
+		baseURL:       server.URL + "/test-org/test-project/_apis",
+		httpClient:    http.DefaultClient,
 	}
 
 	err := client.UpdateWorkItemState(123, "InvalidState")
