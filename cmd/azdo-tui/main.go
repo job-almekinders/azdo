@@ -175,23 +175,31 @@ func runTUI() error {
 		}
 	}
 
-	// Get PAT from keyring
-	store := config.NewKeyringStore()
-	pat, err := store.GetPAT()
-	if err != nil {
-		// If PAT not found, prompt user to enter it
-		if errors.Is(err, config.ErrNotFound) {
-			pat, err = promptForPAT(store)
-			if err != nil {
-				return fmt.Errorf("failed to set PAT: %w", err)
+	// Build token provider based on configured auth method
+	var provider azdevops.TokenProvider
+	if cfg.IsAzCLIAuth() {
+		provider = azdevops.NewAzCLITokenProvider()
+	} else {
+		store := config.NewKeyringStore()
+		pat, err := store.GetPAT()
+		if err != nil {
+			if errors.Is(err, config.ErrNotFound) {
+				pat, err = promptForPAT(store)
+				if err != nil {
+					return fmt.Errorf("failed to set PAT: %w", err)
+				}
+			} else {
+				return fmt.Errorf("failed to get PAT: %w", err)
 			}
-		} else {
-			return fmt.Errorf("failed to get PAT: %w", err)
+		}
+		provider, err = azdevops.NewPATTokenProvider(pat)
+		if err != nil {
+			return fmt.Errorf("failed to create PAT provider: %w", err)
 		}
 	}
 
 	// Create multi-project Azure DevOps client
-	client, err := azdevops.NewMultiClient(cfg.Organization, cfg.Projects, pat, cfg.DisplayNames)
+	client, err := azdevops.NewMultiClientWithProvider(cfg.Organization, cfg.Projects, provider, cfg.DisplayNames)
 	if err != nil {
 		return fmt.Errorf("failed to create Azure DevOps client: %w", err)
 	}
