@@ -22,6 +22,7 @@ type Config struct {
 	PollingInterval int               `mapstructure:"polling_interval"`
 	Theme           string            `mapstructure:"theme"`
 	DisabledPanes   []string          `mapstructure:"-"` // parsed from comma-separated "disabled_panes"
+	AuthMethod      string            `mapstructure:"auth_method"`
 	configPath      string            // internal field to store config path for saving
 }
 
@@ -278,6 +279,13 @@ func (c *Config) Validate() error {
 		}
 	}
 
+	switch c.AuthMethod {
+	case "", "pat", "az-cli":
+		// valid
+	default:
+		return fmt.Errorf("invalid auth_method %q: must be 'pat' or 'az-cli'", c.AuthMethod)
+	}
+
 	return nil
 }
 
@@ -288,6 +296,11 @@ func (c *Config) GetTheme() string {
 		return DefaultTheme
 	}
 	return c.Theme
+}
+
+// IsAzCLIAuth returns true when auth_method is "az-cli".
+func (c *Config) IsAzCLIAuth() bool {
+	return c.AuthMethod == "az-cli"
 }
 
 // Save writes the current configuration to the config file
@@ -338,6 +351,10 @@ func (c *Config) Save() error {
 
 	if len(c.DisabledPanes) > 0 {
 		v.Set("disabled_panes", strings.Join(c.DisabledPanes, ","))
+	}
+
+	if c.AuthMethod != "" {
+		v.Set("auth_method", c.AuthMethod)
 	}
 
 	// Write config file

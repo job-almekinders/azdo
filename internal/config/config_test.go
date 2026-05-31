@@ -802,3 +802,88 @@ func TestNewWithPath_CreatesValidConfig(t *testing.T) {
 		t.Errorf("loaded Organization = %q, want %q", loaded.Organization, "my-org")
 	}
 }
+
+func TestConfig_AuthMethod_DefaultsToPAT(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.yaml")
+
+	// Config without auth_method field
+	content := "organization: myorg\nprojects:\n  - proj\npolling_interval: 60\ntheme: dark\n"
+	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write config: %v", err)
+	}
+
+	cfg, err := LoadFrom(configPath)
+	if err != nil {
+		t.Fatalf("LoadFrom() failed: %v", err)
+	}
+
+	if cfg.AuthMethod != "" && cfg.AuthMethod != "pat" {
+		t.Errorf("AuthMethod should default to '' or 'pat', got %q", cfg.AuthMethod)
+	}
+}
+
+func TestConfig_AuthMethod_AzCLI(t *testing.T) {
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "config.yaml")
+
+	content := "organization: myorg\nprojects:\n  - proj\npolling_interval: 60\ntheme: dark\nauth_method: az-cli\n"
+	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
+		t.Fatalf("failed to write config: %v", err)
+	}
+
+	cfg, err := LoadFrom(configPath)
+	if err != nil {
+		t.Fatalf("LoadFrom() failed: %v", err)
+	}
+
+	if cfg.AuthMethod != "az-cli" {
+		t.Errorf("AuthMethod = %q, want %q", cfg.AuthMethod, "az-cli")
+	}
+}
+
+func TestConfig_Validate_InvalidAuthMethod(t *testing.T) {
+	cfg := Config{
+		Organization:    "org",
+		Projects:        []string{"proj"},
+		PollingInterval: 60,
+		Theme:           "dark",
+		AuthMethod:      "unknown-method",
+	}
+
+	if err := cfg.Validate(); err == nil {
+		t.Error("expected error for unknown auth_method")
+	}
+}
+
+func TestConfig_Validate_AuthMethod_ValidValues(t *testing.T) {
+	for _, method := range []string{"", "pat", "az-cli"} {
+		cfg := Config{
+			Organization:    "org",
+			Projects:        []string{"proj"},
+			PollingInterval: 60,
+			Theme:           "dark",
+			AuthMethod:      method,
+		}
+		if err := cfg.Validate(); err != nil {
+			t.Errorf("Validate() with auth_method=%q should not error, got: %v", method, err)
+		}
+	}
+}
+
+func TestConfig_IsAzCLIAuth(t *testing.T) {
+	tests := []struct {
+		method string
+		want   bool
+	}{
+		{"az-cli", true},
+		{"pat", false},
+		{"", false},
+	}
+	for _, tt := range tests {
+		cfg := Config{AuthMethod: tt.method}
+		if got := cfg.IsAzCLIAuth(); got != tt.want {
+			t.Errorf("IsAzCLIAuth() with %q = %v, want %v", tt.method, got, tt.want)
+		}
+	}
+}
