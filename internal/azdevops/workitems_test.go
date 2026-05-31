@@ -182,7 +182,7 @@ func TestClient_GetWorkItems_RequestsReproStepsField(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -223,7 +223,7 @@ func TestClient_QueryWorkItemIDs(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -283,7 +283,7 @@ func TestClient_GetWorkItems(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -305,7 +305,7 @@ func TestClient_GetWorkItems_EmptyIDs(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    "http://example.com",
 		httpClient: http.DefaultClient,
 	}
@@ -350,7 +350,7 @@ func TestClient_ListWorkItems_QueryScopedToProject(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -398,7 +398,7 @@ func TestClient_ListWorkItems(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -432,7 +432,7 @@ func TestClient_ListMyWorkItems_QueryContainsAtMe(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -463,7 +463,7 @@ func TestClient_ListWorkItems_NoResults(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -503,7 +503,7 @@ func TestClient_GetWorkItemTypeStates(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -543,7 +543,7 @@ func TestClient_GetWorkItemTypeStates_ExcludesRemovedCategory(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -587,7 +587,7 @@ func TestClient_UpdateWorkItemState(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -704,7 +704,7 @@ func TestClient_GetWorkItems_RequestsTagsField(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}
@@ -728,7 +728,7 @@ func TestClient_UpdateWorkItemState_APIError(t *testing.T) {
 	client := &Client{
 		org:        "test-org",
 		project:    "test-project",
-		pat:        "test-pat",
+		tokenProvider: &PATTokenProvider{pat: "test-pat"},
 		baseURL:    server.URL + "/test-org/test-project/_apis",
 		httpClient: http.DefaultClient,
 	}

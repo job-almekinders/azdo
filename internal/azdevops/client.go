@@ -1,7 +1,6 @@
 package azdevops
 
 import (
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,105 +10,106 @@ import (
 
 // Client represents an Azure DevOps API client
 type Client struct {
-	org        string
-	project    string
-	pat        string
-	baseURL    string
-	httpClient *http.Client
-	userID     string // cached authenticated user ID
+	org           string
+	project       string
+	tokenProvider TokenProvider
+	baseURL       string
+	httpClient    *http.Client
+	userID        string
 }
 
 // GetOrg returns the organization name
-func (c *Client) GetOrg() string {
-	return c.org
-}
+func (c *Client) GetOrg() string { return c.org }
 
 // GetProject returns the project name
-func (c *Client) GetProject() string {
-	return c.project
-}
+func (c *Client) GetProject() string { return c.project }
 
-// SetBaseURL overrides the base URL for the client.
-// This is used by the demo mode to point to a local mock server.
-func (c *Client) SetBaseURL(url string) {
-	c.baseURL = url
-}
+// SetBaseURL overrides the base URL for the client (used by demo mode).
+func (c *Client) SetBaseURL(url string) { c.baseURL = url }
 
-// SetUserID sets the cached user ID, bypassing the connectionData API call.
-// This is used by the demo mode.
-func (c *Client) SetUserID(id string) {
-	c.userID = id
-}
+// SetUserID sets the cached user ID, bypassing the connectionData API call (used by demo mode).
+func (c *Client) SetUserID(id string) { c.userID = id }
 
-// NewClient creates a new Azure DevOps API client
+// NewClient creates a Client authenticated with a Personal Access Token.
 func NewClient(org, project, pat string) (*Client, error) {
 	if org == "" {
 		return nil, fmt.Errorf("organization cannot be empty")
 	}
-
 	if project == "" {
 		return nil, fmt.Errorf("project cannot be empty")
 	}
-
 	if pat == "" {
 		return nil, fmt.Errorf("PAT cannot be empty")
 	}
 
-	baseURL := fmt.Sprintf("https://dev.azure.com/%s/%s/_apis", org, project)
+	provider, err := NewPATTokenProvider(pat)
+	if err != nil {
+		return nil, err
+	}
+	return newClient(org, project, provider), nil
+}
 
+// NewClientWithProvider creates a Client using the supplied TokenProvider.
+func NewClientWithProvider(org, project string, provider TokenProvider) (*Client, error) {
+	if org == "" {
+		return nil, fmt.Errorf("organization cannot be empty")
+	}
+	if project == "" {
+		return nil, fmt.Errorf("project cannot be empty")
+	}
+	if provider == nil {
+		return nil, fmt.Errorf("token provider cannot be nil")
+	}
+	return newClient(org, project, provider), nil
+}
+
+func newClient(org, project string, provider TokenProvider) *Client {
 	return &Client{
-		org:     org,
-		project: project,
-		pat:     pat,
-		baseURL: baseURL,
-		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
-		},
-	}, nil
+		org:           org,
+		project:       project,
+		tokenProvider: provider,
+		baseURL:       fmt.Sprintf("https://dev.azure.com/%s/%s/_apis", org, project),
+		httpClient:    &http.Client{Timeout: 30 * time.Second},
+	}
+}
+
+// setAuthHeader sets the Authorization header using the token provider.
+func (c *Client) setAuthHeader(req *http.Request) error {
+	header, err := c.tokenProvider.AuthorizationHeader()
+	if err != nil {
+		return fmt.Errorf("failed to get auth header: %w", err)
+	}
+	req.Header.Set("Authorization", header)
+	return nil
 }
 
 // get performs a GET request to the Azure DevOps API
 func (c *Client) get(path string) ([]byte, error) {
-	// Construct full URL
-	url := c.baseURL + path
-
-	// Create request
-	req, err := http.NewRequest("GET", url, nil)
+	req, err := http.NewRequest("GET", c.baseURL+path, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	// Set headers
-	c.setAuthHeader(req)
+	if err := c.setAuthHeader(req); err != nil {
+		return nil, err
+	}
 	req.Header.Set("Content-Type", "application/json")
 
-	// Execute request
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to execute request: %w", err)
 	}
 	defer resp.Body.Close()
 
-	// Read response body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
-	// Check for HTTP errors
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, formatHTTPError(resp.StatusCode, body)
 	}
-
 	return body, nil
-}
-
-// setAuthHeader sets the Authorization header with Basic auth using PAT
-// Azure DevOps uses the format ":{PAT}" for basic auth
-func (c *Client) setAuthHeader(req *http.Request) {
-	auth := ":" + c.pat
-	encodedAuth := base64.StdEncoding.EncodeToString([]byte(auth))
-	req.Header.Set("Authorization", "Basic "+encodedAuth)
 }
 
 // put performs a PUT request to the Azure DevOps API
@@ -129,14 +129,14 @@ func (c *Client) post(path string, body io.Reader) ([]byte, error) {
 
 // doRequestWithContentType performs an HTTP request with a custom Content-Type header.
 func (c *Client) doRequestWithContentType(method, path string, body io.Reader, contentType string) ([]byte, error) {
-	url := c.baseURL + path
-
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, c.baseURL+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	c.setAuthHeader(req)
+	if err := c.setAuthHeader(req); err != nil {
+		return nil, err
+	}
 	req.Header.Set("Content-Type", contentType)
 
 	resp, err := c.httpClient.Do(req)
@@ -153,20 +153,19 @@ func (c *Client) doRequestWithContentType(method, path string, body io.Reader, c
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, formatHTTPError(resp.StatusCode, respBody)
 	}
-
 	return respBody, nil
 }
 
-// doRequest performs an HTTP request with the given method
+// doRequest performs an HTTP request with the given method and JSON Content-Type.
 func (c *Client) doRequest(method, path string, body io.Reader) ([]byte, error) {
-	url := c.baseURL + path
-
-	req, err := http.NewRequest(method, url, body)
+	req, err := http.NewRequest(method, c.baseURL+path, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	c.setAuthHeader(req)
+	if err := c.setAuthHeader(req); err != nil {
+		return nil, err
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
@@ -183,7 +182,6 @@ func (c *Client) doRequest(method, path string, body io.Reader) ([]byte, error) 
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, formatHTTPError(resp.StatusCode, respBody)
 	}
-
 	return respBody, nil
 }
 
@@ -194,21 +192,21 @@ type connectionDataResponse struct {
 	} `json:"authenticatedUser"`
 }
 
-// GetCurrentUserID returns the authenticated user's ID, fetching and caching it on first call
+// GetCurrentUserID returns the authenticated user's ID, fetching and caching it on first call.
 func (c *Client) GetCurrentUserID() (string, error) {
 	if c.userID != "" {
 		return c.userID, nil
 	}
 
-	// Connection data is at org level, not project-scoped
 	url := fmt.Sprintf("https://dev.azure.com/%s/_apis/connectionData", c.org)
-
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return "", fmt.Errorf("failed to create request: %w", err)
 	}
 
-	c.setAuthHeader(req)
+	if err := c.setAuthHeader(req); err != nil {
+		return "", err
+	}
 	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := c.httpClient.Do(req)
@@ -239,7 +237,7 @@ func (c *Client) GetCurrentUserID() (string, error) {
 	return c.userID, nil
 }
 
-// formatHTTPError creates a user-friendly error message based on the HTTP status code
+// formatHTTPError creates a user-friendly error message based on the HTTP status code.
 func formatHTTPError(statusCode int, _ []byte) error {
 	switch statusCode {
 	case http.StatusUnauthorized:

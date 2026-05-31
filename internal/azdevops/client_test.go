@@ -372,3 +372,45 @@ func TestFormatHTTPError_ServiceUnavailable(t *testing.T) {
 		t.Errorf("Expected error to mention service unavailability or temporary issue, got %q", err.Error())
 	}
 }
+
+func TestNewClientWithProvider_BearerAuth(t *testing.T) {
+	bearer := &fakeProvider{header: "Bearer fake-token"}
+
+	client, err := NewClientWithProvider("myorg", "myproject", bearer)
+	if err != nil {
+		t.Fatalf("NewClientWithProvider() failed: %v", err)
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader != "Bearer fake-token" {
+			t.Errorf("expected 'Bearer fake-token', got %q", authHeader)
+		}
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte(`{}`))
+	}))
+	defer server.Close()
+
+	client.baseURL = server.URL
+	_, err = client.get("/test")
+	if err != nil {
+		t.Fatalf("get() failed: %v", err)
+	}
+}
+
+func TestNewClientWithProvider_NilProvider(t *testing.T) {
+	_, err := NewClientWithProvider("org", "proj", nil)
+	if err == nil {
+		t.Error("expected error for nil provider")
+	}
+}
+
+// fakeProvider is a test double for TokenProvider.
+type fakeProvider struct {
+	header string
+	err    error
+}
+
+func (f *fakeProvider) AuthorizationHeader() (string, error) {
+	return f.header, f.err
+}
