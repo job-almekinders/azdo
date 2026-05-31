@@ -89,15 +89,15 @@ func (a *AzCLITokenProvider) fetchToken() (string, time.Time, error) {
 
 // parseExpiresOn handles both the space-separated format ("2024-01-01 12:00:00.000000")
 // used by older az CLI versions and ISO 8601 used by newer ones.
+// The space-separated format uses local wall-clock time and must be parsed with time.Local.
 func parseExpiresOn(s string) (time.Time, error) {
-	for _, format := range []string{
-		"2006-01-02 15:04:05.999999",
-		time.RFC3339,
-		"2006-01-02T15:04:05Z07:00",
-	} {
-		if t, err := time.Parse(format, s); err == nil {
-			return t, nil
-		}
+	// Space-separated format from older az CLI versions uses local wall-clock time.
+	if t, err := time.ParseInLocation("2006-01-02 15:04:05.999999", s, time.Local); err == nil {
+		return t, nil
+	}
+	// ISO 8601 / RFC3339 formats include timezone offset — parse directly.
+	if t, err := time.Parse(time.RFC3339, s); err == nil {
+		return t, nil
 	}
 	return time.Time{}, fmt.Errorf("unrecognized expiresOn format: %q", s)
 }
