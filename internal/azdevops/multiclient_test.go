@@ -141,9 +141,10 @@ func newErrorServer(t *testing.T) *httptest.Server {
 // newMultiClientWithServers creates a MultiClient with test servers overriding baseURLs.
 func newMultiClientWithServers(t *testing.T, servers map[string]*httptest.Server) *MultiClient {
 	t.Helper()
+	provider, _ := NewPATTokenProvider("testpat")
 	clients := make(map[string]*Client, len(servers))
 	for project, server := range servers {
-		c, err := NewClient("testorg", project, "testpat")
+		c, err := NewClientWithProvider("testorg", project, provider)
 		if err != nil {
 			t.Fatalf("failed to create client for %q: %v", project, err)
 		}
@@ -151,9 +152,9 @@ func newMultiClientWithServers(t *testing.T, servers map[string]*httptest.Server
 		clients[project] = c
 	}
 	return &MultiClient{
-		org:     "testorg",
-		pat:     "testpat",
-		clients: clients,
+		org:      "testorg",
+		provider: provider,
+		clients:  clients,
 	}
 }
 
@@ -513,5 +514,37 @@ func TestMultiClient_ListMyWorkItems_MergedSortedAndTagged(t *testing.T) {
 	}
 	if items[1].ProjectName != "alpha" {
 		t.Errorf("expected items[1].ProjectName = 'alpha', got %q", items[1].ProjectName)
+	}
+}
+
+func TestNewMultiClientWithProvider(t *testing.T) {
+	provider, _ := NewPATTokenProvider("testpat")
+	mc, err := NewMultiClientWithProvider("myorg", []string{"alpha", "beta"}, provider, nil)
+	if err != nil {
+		t.Fatalf("NewMultiClientWithProvider() failed: %v", err)
+	}
+
+	if mc.GetOrg() != "myorg" {
+		t.Errorf("GetOrg() = %q, want %q", mc.GetOrg(), "myorg")
+	}
+
+	projects := mc.Projects()
+	if len(projects) != 2 {
+		t.Fatalf("expected 2 projects, got %d", len(projects))
+	}
+}
+
+func TestNewMultiClientWithProvider_NilProvider(t *testing.T) {
+	_, err := NewMultiClientWithProvider("org", []string{"proj"}, nil, nil)
+	if err == nil {
+		t.Error("expected error for nil provider")
+	}
+}
+
+func TestNewMultiClientWithProvider_AzCLIProvider(t *testing.T) {
+	azProvider := NewAzCLITokenProvider()
+	_, err := NewMultiClientWithProvider("org", []string{"proj"}, azProvider, nil)
+	if err != nil {
+		t.Fatalf("NewMultiClientWithProvider() with AzCLI provider failed: %v", err)
 	}
 }

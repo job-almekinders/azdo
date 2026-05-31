@@ -9,27 +9,41 @@ import (
 // MultiClient wraps multiple project-scoped clients for concurrent fetching.
 type MultiClient struct {
 	org          string
-	pat          string
-	clients      map[string]*Client // project name → client
-	displayNames map[string]string  // API name → display name
+	provider     TokenProvider
+	clients      map[string]*Client
+	displayNames map[string]string
 }
 
-// NewMultiClient creates clients for each project.
-// displayNames is an optional map of API name → display name for UI rendering.
+// NewMultiClient creates clients for each project using PAT auth.
 func NewMultiClient(org string, projects []string, pat string, displayNames map[string]string) (*MultiClient, error) {
+	if pat == "" {
+		return nil, fmt.Errorf("PAT cannot be empty")
+	}
+	p, err := NewPATTokenProvider(pat)
+	if err != nil {
+		return nil, err
+	}
+	return NewMultiClientWithProvider(org, projects, p, displayNames)
+}
+
+// NewMultiClientWithProvider creates clients for each project using the given TokenProvider.
+func NewMultiClientWithProvider(org string, projects []string, provider TokenProvider, displayNames map[string]string) (*MultiClient, error) {
 	if len(projects) == 0 {
 		return nil, fmt.Errorf("at least one project is required")
+	}
+	if provider == nil {
+		return nil, fmt.Errorf("token provider cannot be nil")
 	}
 
 	clients := make(map[string]*Client, len(projects))
 	for _, project := range projects {
-		c, err := NewClient(org, project, pat)
+		c, err := NewClientWithProvider(org, project, provider)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create client for project %q: %w", project, err)
 		}
 		clients[project] = c
 	}
-	return &MultiClient{org: org, pat: pat, clients: clients, displayNames: displayNames}, nil
+	return &MultiClient{org: org, provider: provider, clients: clients, displayNames: displayNames}, nil
 }
 
 // DisplayNameFor returns the display name for a project API name.
