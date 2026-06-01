@@ -131,35 +131,60 @@ func runVersion() error {
 }
 
 func runAuth() error {
-	store := config.NewKeyringStore()
-
-	// Check if PAT already exists to show appropriate message
-	_, err := store.GetPAT()
-	isUpdate := err == nil
-
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("99"))
 	fmt.Println(titleStyle.Render(strings.Join(components.LogoArt, "\n")))
 	fmt.Println()
-	if isUpdate {
-		fmt.Println("Azure DevOps PAT Update")
-		fmt.Println("This will replace your existing Personal Access Token in the system keyring.")
-	} else {
-		fmt.Println("Azure DevOps PAT Setup")
-		fmt.Println("This will store your Personal Access Token in the system keyring.")
-	}
-	fmt.Println()
-	fmt.Println(patinput.PermissionInfoPlain())
-	fmt.Println()
 
-	pat, err := promptForPATWithMode(store, isUpdate)
+	method, err := selectAuthMethod(os.Stdin, os.Stdout)
 	if err != nil {
-		return fmt.Errorf("failed to set PAT: %w", err)
+		return fmt.Errorf("auth setup cancelled: %w", err)
 	}
 
-	if pat != "" {
-		fmt.Println("\nPAT saved successfully to system keyring.")
+	configPath, _ := config.GetPath()
+
+	switch method {
+	case "az-cli":
+		fmt.Println("\nConfiguring Azure CLI authentication.")
+		fmt.Println("Make sure you are logged in with: az login")
+		updated, err := updateConfigAuthMethod(configPath, "az-cli")
+		if err != nil {
+			return fmt.Errorf("failed to update config: %w", err)
+		}
+		if updated {
+			fmt.Println("\nConfig updated: auth_method set to az-cli.")
+		} else {
+			fmt.Println("\nNo config file found — add 'auth_method: az-cli' to your config.yaml when you set it up.")
+		}
+
+	default: // "pat"
+		store := config.NewKeyringStore()
+		_, err := store.GetPAT()
+		isUpdate := err == nil
+
+		if isUpdate {
+			fmt.Println("Azure DevOps PAT Update")
+			fmt.Println("This will replace your existing Personal Access Token in the system keyring.")
+		} else {
+			fmt.Println("Azure DevOps PAT Setup")
+			fmt.Println("This will store your Personal Access Token in the system keyring.")
+		}
+		fmt.Println()
+		fmt.Println(patinput.PermissionInfoPlain())
+		fmt.Println()
+
+		pat, err := promptForPATWithMode(store, isUpdate)
+		if err != nil {
+			return fmt.Errorf("failed to set PAT: %w", err)
+		}
+		if pat != "" {
+			fmt.Println("\nPAT saved successfully to system keyring.")
+		}
+
+		if _, err := updateConfigAuthMethod(configPath, "pat"); err != nil {
+			fmt.Printf("Warning: could not update config auth_method: %v\n", err)
+		}
 	}
 
 	return nil
