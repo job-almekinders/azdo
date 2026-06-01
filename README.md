@@ -14,6 +14,7 @@ A Terminal User Interface (TUI) for Azure DevOps - manage pull requests, work it
 - [Demo Mode](#demo-mode)
 - [CLI Usage](#cli-usage)
 - [Configuration](#configuration)
+  - [Azure CLI Authentication](#azure-cli-authentication)
 - [Keyboard Shortcuts](#keyboard-shortcuts)
 - [Technology Stack](#technology-stack)
 - [Development](#development)
@@ -192,6 +193,10 @@ polling_interval: 60
 # Available themes: dark, gruvbox, nord, dracula, catppuccin, github, retro, monokai
 theme: dark
 
+# Authentication method (optional, default: pat)
+# Use 'az-cli' to authenticate via the Azure CLI instead of a PAT.
+# auth_method: az-cli
+
 # Disable specific panes (optional, comma-separated)
 # Valid values: pipelines, workitems
 # disabled_panes: pipelines,workitems
@@ -203,6 +208,7 @@ theme: dark
 - `polling_interval`: How often to refresh data in seconds (optional, default: 60)
 - `theme`: Color theme for the UI (optional, default: dark)
 - `disabled_panes`: Comma-separated list of panes to hide (optional). Valid values: `pipelines`, `workitems`. When a pane is disabled, its tab, keyboard shortcuts, and all related UI are removed. Pull Requests cannot be disabled.
+- `auth_method`: Authentication method (optional, default: `pat`). Set to `az-cli` to use the Azure CLI instead of a PAT — see [Azure CLI Authentication](#azure-cli-authentication) below.
 
 **Available Themes:**
 - `dark` - Dark theme with blue and cyan accents
@@ -266,7 +272,9 @@ See `example-theme.json` in the repository for a complete template with all avai
 - Hex values: `#ff0000` or `#f00`
 - ANSI 256 colors: `"1"`, `"33"`, `"196"`
 
-### 2. Azure DevOps Personal Access Token (PAT)
+### 2. Authentication
+
+#### Personal Access Token (PAT) — default
 
 On first run, the application will prompt you to enter your Azure DevOps PAT. The token is securely stored in your system's credential manager:
 - **Windows**: Windows Credential Manager
@@ -287,6 +295,17 @@ To create a PAT:
 2. Click "New Token"
 3. Select the required scopes
 4. Copy the generated token
+
+#### Azure CLI Authentication
+
+As an alternative to a PAT, azdo can obtain tokens via the [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli):
+
+```bash
+# Install the Azure CLI, then log in
+az login
+```
+
+Set `auth_method: az-cli` in your `config.yaml`. No PAT is needed — tokens are fetched automatically and cached with proactive refresh.
 
 ## Keyboard Shortcuts
 
