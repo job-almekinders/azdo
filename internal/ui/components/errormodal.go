@@ -233,6 +233,13 @@ func ClassifyError(err error) *ErrorInfo {
 	}
 
 	if strings.Contains(msg, "HTTP 401") || strings.Contains(msg, "authentication failed") {
+		if strings.Contains(msg, "az-cli") || strings.Contains(msg, "az login") {
+			return &ErrorInfo{
+				Title:   "Authentication Error",
+				Message: "Your Azure CLI session may be expired or you are not logged in.",
+				Hint:    "Run 'az login' to refresh your session.",
+			}
+		}
 		return &ErrorInfo{
 			Title:   "Authentication Error",
 			Message: "Your Personal Access Token (PAT) may be expired or invalid.",
@@ -241,6 +248,13 @@ func ClassifyError(err error) *ErrorInfo {
 	}
 
 	if strings.Contains(msg, "HTTP 403") || strings.Contains(msg, "access denied") {
+		if strings.Contains(msg, "Azure account") || strings.Contains(msg, "az login") {
+			return &ErrorInfo{
+				Title:   "Authentication Error",
+				Message: "Your Azure account does not have sufficient permissions for this operation.",
+				Hint:    "Check that your account has access to the Azure DevOps organization.",
+			}
+		}
 		return &ErrorInfo{
 			Title:   "Authentication Error",
 			Message: "Your PAT does not have sufficient permissions for this operation.",

@@ -216,6 +216,42 @@ func TestClassifyError_403(t *testing.T) {
 	}
 }
 
+func TestClassifyError_401_AzCLI(t *testing.T) {
+	err := fmt.Errorf("authentication failed (HTTP 401): az-cli token was rejected. Run 'az login' to refresh your session")
+	result := ClassifyError(err)
+
+	if result == nil {
+		t.Fatal("expected non-nil ErrorInfo for az-cli 401")
+	}
+	if result.Title != "Authentication Error" {
+		t.Errorf("expected title 'Authentication Error', got %q", result.Title)
+	}
+	if strings.Contains(result.Message, "PAT") {
+		t.Errorf("az-cli 401 message should not mention PAT, got %q", result.Message)
+	}
+	if !strings.Contains(result.Hint, "az login") {
+		t.Errorf("az-cli 401 hint should mention 'az login', got %q", result.Hint)
+	}
+}
+
+func TestClassifyError_403_AzCLI(t *testing.T) {
+	err := fmt.Errorf("access denied (HTTP 403): your Azure account does not have sufficient permissions. Required: Code (Read), Build (Read), Work Items (Read & Write)")
+	result := ClassifyError(err)
+
+	if result == nil {
+		t.Fatal("expected non-nil ErrorInfo for az-cli 403")
+	}
+	if result.Title != "Authentication Error" {
+		t.Errorf("expected title 'Authentication Error', got %q", result.Title)
+	}
+	if strings.Contains(result.Message, "PAT") {
+		t.Errorf("az-cli 403 message should not mention PAT, got %q", result.Message)
+	}
+	if strings.Contains(result.Hint, "PAT") {
+		t.Errorf("az-cli 403 hint should not mention PAT, got %q", result.Hint)
+	}
+}
+
 func TestClassifyError_TransientError(t *testing.T) {
 	err := fmt.Errorf("connection timeout")
 	result := ClassifyError(err)
